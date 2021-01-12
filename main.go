@@ -1,26 +1,19 @@
 package main
 
 import (
+	"book-list-app/controllers"
+	"book-list-app/driver"
+	"book-list-app/models"
 	"database/sql"
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/lib/pq"
 	"github.com/subosito/gotenv"
 
 	"github.com/gorilla/mux"
 )
 
-//model book to get or add a new book
-type Book struct {
-	ID     int    `json:"id"`
-	Title  string `json:"title"`
-	Author string `json:"author"`
-	Year   string `json:"year"`
-}
-
-var books []Book
+var books []models.Book
 
 var db *sql.DB
 
@@ -37,37 +30,17 @@ func logFatal(err error) {
 
 func main() {
 
-	pgUrl, err := pq.ParseURL(os.Getenv("ELEPHANTSQL_URL"))
-	logFatal(err)
-
-	log.Println(pgUrl)
+	db = driver.ConnectDB()
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/books", getBooks).Methods("GET")
-	router.HandleFunc("/books/{id}", getBook).Methods("GET")
-	router.HandleFunc("/books", addBook).Methods("POST")
-	router.HandleFunc("/books", updateBook).Methods("PUT")
-	router.HandleFunc("/books/{id}", removeBook).Methods("DELETE")
+	controller := controllers.Controller{}
+
+	router.HandleFunc("/books", controller.GetBooks(db)).Methods("GET")
+	router.HandleFunc("/books/{id}", controller.GetBook(db)).Methods("GET")
+	router.HandleFunc("/books", controller.AddBook(db)).Methods("POST")
+	router.HandleFunc("/books", controller.UpdateBook(db)).Methods("PUT")
+	router.HandleFunc("/books/{id}", controller.RemoveBook(db)).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":8000", router))
-}
-
-func getBooks(w http.ResponseWriter, r *http.Request) {
-
-}
-func getBook(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func addBook(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func updateBook(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func removeBook(w http.ResponseWriter, r *http.Request) {
-
 }
